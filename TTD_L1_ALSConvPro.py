@@ -23,10 +23,10 @@ def TTD_reconstruct(G_list:list):
         X = np.tensordot(X, G_list[i], axes=([-1], [0]))
     return np.reshape(X, n)
 
-def L1_TTD_AltConvPro(X:np.array, ranks: list = [None], max_iter:int=100, tol:float=1e-4):
+def L1_TTD_ALSConvPro(X:np.array, ranks: list = [None], max_iter:int=100, tol:float=1e-4):
     """
     ## Inputs
-    L1 Norm Tensor Train Decomposition using Alternating Convex Programming 
+    L1 Norm Tensor Train Decomposition using ALS based Convex Programming 
     X: numpy.array
         Input tensor
     ranks: list
@@ -126,7 +126,7 @@ def L1_TTD_AltConvPro(X:np.array, ranks: list = [None], max_iter:int=100, tol:fl
 # Example
 # np.random.seed(3)
 # X = np.random.randint(0, 10, (2, 3, 4))
-# G, losses, best_G = L1_TTD_AltConvPro(X)
+# G, losses, best_G = L1_TTD_ALSConvPro(X)
 # plt.plot(losses)
 # plt.title("Loss vs Iteration\nAvg Loss: {:.4f}".format(np.mean(losses)))
 # plt.xlabel("Iteration")
