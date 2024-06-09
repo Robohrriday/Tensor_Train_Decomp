@@ -66,12 +66,14 @@ def L1_TTD_AltConvPro(X:np.array, ranks: list = [None]):
 
 # # Example
 # np.random.seed(0)
-# X = np.random.rand(5, 10, 15, 20)
+# X = np.random.rand(5, 6, 7, 8, 9)
 # G, losses = L1_TTD_AltConvPro(X)
 # # print(X)
 # # print(TTD_reconstruct(G))
-# print(np.linalg.norm(X - TTD_reconstruct(G))/np.linalg.norm(X))
-# print([g.shape for g in G])
+# print(f"L1: {np.linalg.norm((X - TTD_reconstruct(G)).reshape(-1, 1), ord = 1)/np.linalg.norm(X.reshape(-1, 1), ord = 1)}")
+# print(f"L2: {np.linalg.norm(X - TTD_reconstruct(G))/np.linalg.norm(X)}")
+# print(f"Sum : {np.sum(losses)}")
+# # print([g.shape for g in G])
 # # plt.plot(losses)
 # # plt.grid(alpha = 0.5)
 # # plt.show()
