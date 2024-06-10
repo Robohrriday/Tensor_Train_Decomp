@@ -95,15 +95,16 @@ def L1_TTD_ALSConvPro(X:np.array, ranks: list = [None], max_iter:int=100, tol:fl
             G_i_new = np.random.rand(r[i]*r[i+1], n[i])
             
             for j in range(n[i]):
-                c = np.concatenate([np.ones(shape = np.prod(n)//n[i]), np.zeros(shape = r[i]*r[i+1])])
-                A_ub = np.block([
-                    [-np.eye(np.prod(n)//n[i]), A],
-                    [-np.eye(np.prod(n)//n[i]), -A]
-                    ])
-                b_ub = np.concatenate([utils.mode_n_unfolding(X, i)[j, :], -utils.mode_n_unfolding(X, i)[j, :]])
-                bounds = [(0, None)]*(np.prod(n)//n[i]) + [(-1e+1, 1e+1)]*(r[i]*r[i+1])
-                result = linprog(c, A_ub = A_ub, b_ub = b_ub, bounds = bounds)
-                G_i_new[:, j] = result.x[-r[i]*r[i+1]:]
+                # c = np.concatenate([np.ones(shape = np.prod(n)//n[i]), np.zeros(shape = r[i]*r[i+1])])
+                # A_ub = np.block([
+                #     [-np.eye(np.prod(n)//n[i]), A],
+                #     [-np.eye(np.prod(n)//n[i]), -A]
+                #     ])
+                # b_ub = np.concatenate([utils.mode_n_unfolding(X, i)[j, :], -utils.mode_n_unfolding(X, i)[j, :]])
+                # bounds = [(0, None)]*(np.prod(n)//n[i]) + [(-1e+1, 1e+1)]*(r[i]*r[i+1])
+                # result = linprog(c, A_ub = A_ub, b_ub = b_ub, bounds = bounds)
+                # G_i_new[:, j] = result.x[-r[i]*r[i+1]:]
+                G_i_new[:, j] = utils.LP_solve(A, utils.mode_n_unfolding(X, i)[j, :], bound_multiplier = 5)
             G_list[i] = utils.mode_n_folding(G_i_new.T, 1, (r[i], n[i], r[i+1]))
 
 
@@ -124,14 +125,14 @@ def L1_TTD_ALSConvPro(X:np.array, ranks: list = [None], max_iter:int=100, tol:fl
     return G_list, losses, best_G_list
 
 # Example
-# np.random.seed(3)
-# X = np.random.randint(0, 10, (2, 3, 4))
-# G, losses, best_G = L1_TTD_ALSConvPro(X)
-# plt.plot(losses)
-# plt.title("Loss vs Iteration\nAvg Loss: {:.4f}".format(np.mean(losses)))
-# plt.xlabel("Iteration")
-# plt.ylabel("Loss")
-# plt.grid(alpha = 0.5)
-# plt.show()
+np.random.seed(3)
+X = np.random.randint(0, 10, (2, 3, 4))
+G, losses, best_G = L1_TTD_ALSConvPro(X)
+plt.plot(losses)
+plt.title("Loss vs Iteration\nAvg Loss: {:.4f}".format(np.mean(losses)))
+plt.xlabel("Iteration")
+plt.ylabel("Loss")
+plt.grid(alpha = 0.5)
+plt.show()
 # print(X)
 # print(TTD_reconstruct(best_G))
