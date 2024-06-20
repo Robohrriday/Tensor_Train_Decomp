@@ -2,9 +2,16 @@ import numpy as np
 from scipy.optimize import linprog
 import utils
 import matplotlib.pyplot as plt
-
+from time import time
 # Naive Implementation
 
+def timeit(method):
+    def timed(*args, **kw):
+        ts = time()
+        G, losses = method(*args, **kw)
+        te = time()
+        return G, losses, te-ts
+    return timed
 
 def TTD_reconstruct(G_list:list):
     """
@@ -23,6 +30,7 @@ def TTD_reconstruct(G_list:list):
         X = np.tensordot(X, G_list[i], axes=([-1], [0]))
     return np.reshape(X, n)
 
+@timeit
 def L1_TTD_AltConvPro(X:np.array, ranks: list = [None]):
     """
     ## Inputs
@@ -31,10 +39,6 @@ def L1_TTD_AltConvPro(X:np.array, ranks: list = [None]):
         Input tensor
     ranks: list
         List of ranks of core tensors
-    max_iter: int (default = 1000)
-        Maximum number of iterations
-    tol: float (default = 1e-4)
-        Tolerance for convergence
     ---
     ## Outputs
     G: list of numpy.array
@@ -57,7 +61,7 @@ def L1_TTD_AltConvPro(X:np.array, ranks: list = [None]):
     # print(r)
     for i in range(d-1):
         X = utils.MATLAB_reshape(X, (r[i]*n[i], -1))
-        U, V, loss = utils.AltConvPro_LP(X, r[i+1])
+        U, V, loss = utils.AltConvPro_LP(X, r[i+1], tol = 1e-6)
         G_list.append(utils.MATLAB_reshape(U, (r[i], n[i], r[i+1])))
         X = V.T
         losses.append(loss[-1])
@@ -66,14 +70,15 @@ def L1_TTD_AltConvPro(X:np.array, ranks: list = [None]):
 
 # # Example
 # np.random.seed(0)
-# X = np.random.rand(5, 6, 7, 8, 9)
-# G, losses = L1_TTD_AltConvPro(X)
+# X = np.random.rand(50, 20, 20 )
+# G, losses, t = L1_TTD_AltConvPro(X)
 # # print(X)
 # # print(TTD_reconstruct(G))
 # print(f"L1: {np.linalg.norm((X - TTD_reconstruct(G)).reshape(-1, 1), ord = 1)/np.linalg.norm(X.reshape(-1, 1), ord = 1)}")
 # print(f"L2: {np.linalg.norm(X - TTD_reconstruct(G))/np.linalg.norm(X)}")
 # print(f"Sum : {np.sum(losses)}")
+# print(f"Time: {t}s")
 # # print([g.shape for g in G])
-# # plt.plot(losses)
-# # plt.grid(alpha = 0.5)
-# # plt.show()
+# plt.plot(losses)
+# plt.grid(alpha = 0.5)
+# plt.show()
