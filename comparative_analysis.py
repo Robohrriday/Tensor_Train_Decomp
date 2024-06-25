@@ -33,6 +33,7 @@ if setup == "1":
     for i in range(1, len(r)-1):
         r[i] = int(comp_rat * r[i])
     compression = True
+    assert np.array([r]) >= 1, "All TT-Ranks should be greater than or equal to 1"
 
     # Print General Information
     print(f"\nTensor Size: {size}")
