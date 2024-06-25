@@ -31,7 +31,7 @@ def TTD_reconstruct(G_list:list):
     return np.reshape(X, n)
 
 @timeit
-def L1_TTD_AltConvPro(X:np.array, ranks: list = [None]):
+def L1_TTD_DivNConq(X:np.array, ranks: list = [None]):
     """
     ## Inputs
     L1 Norm Tensor Train Decomposition using Alternating Convex Programming 
@@ -51,7 +51,7 @@ def L1_TTD_AltConvPro(X:np.array, ranks: list = [None]):
     G_list = []
     losses = []
     # Find ranks
-    if ranks[0] != None:
+    if ranks[0] is not None:
         r = ranks
     else:
         r = [1]
@@ -61,7 +61,7 @@ def L1_TTD_AltConvPro(X:np.array, ranks: list = [None]):
     # print(r)
     for i in range(d-1):
         X = utils.MATLAB_reshape(X, (r[i]*n[i], -1))
-        U, V, loss = utils.AltConvPro_LP(X, r[i+1], tol = 1e-6)
+        U, V, loss = utils.DivNConq(X, r[i+1], tol = 1e-6)
         G_list.append(utils.MATLAB_reshape(U, (r[i], n[i], r[i+1])))
         X = V.T
         losses.append(loss[-1])
@@ -71,7 +71,7 @@ def L1_TTD_AltConvPro(X:np.array, ranks: list = [None]):
 # # Example
 # np.random.seed(0)
 # X = np.random.rand(50, 20, 20 )
-# G, losses, t = L1_TTD_AltConvPro(X)
+# G, losses, t = L1_TTD_DivNConq(X)
 # # print(X)
 # # print(TTD_reconstruct(G))
 # print(f"L1: {np.linalg.norm((X - TTD_reconstruct(G)).reshape(-1, 1), ord = 1)/np.linalg.norm(X.reshape(-1, 1), ord = 1)}")

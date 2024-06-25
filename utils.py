@@ -154,6 +154,35 @@ def AltConvPro_LADRegr(M, rank, iterations: int = 10):
 # plt.plot(losses)
 # plt.show()
 
+# def LP_solve(X, y):
+#     """
+#     Solve the L1 norm optimization problem using linear programming
+#     ## Inputs
+#     X: numpy.array
+#         Input matrix
+#     y: numpy.array
+#         Target vector
+#     ---
+#     ## Outputs
+#     result: numpy.array
+#         Solution vector
+#     """
+#     n, k = X.shape
+#     c = np.concatenate([np.ones(shape = n), np.zeros(shape = k)])
+#     A_ub = np.block([
+#         [-np.eye(n), X],
+#         [-np.eye(n), -X]
+#         ])
+#     b_ub = np.concatenate([y, -y])
+#     bounds = [(0, None)]*n + [(None, None)]*k ########## NEEDS ATTENTION  -np.max(np.max(X, axis = 1), axis = 0)*bound_multiplier
+#     result = linprog(c, A_ub = A_ub, b_ub = b_ub, bounds = bounds)
+#     if result.status != 0:
+#         # print(result.status, result.message)
+#         return None
+#     else:
+#         return result.x[-k:]
+
+
 def LP_solve(X, y):
     """
     Solve the L1 norm optimization problem using linear programming
@@ -168,20 +197,16 @@ def LP_solve(X, y):
         Solution vector
     """
     n, k = X.shape
-    c = np.concatenate([np.ones(shape = n), np.zeros(shape = k)])
-    A_ub = np.block([
-        [-np.eye(n), X],
-        [-np.eye(n), -X]
-        ])
-    b_ub = np.concatenate([y, -y])
-    bounds = [(0, None)]*n + [(None, None)]*k ########## NEEDS ATTENTION  -np.max(np.max(X, axis = 1), axis = 0)*bound_multiplier
-    result = linprog(c, A_ub = A_ub, b_ub = b_ub, bounds = bounds)
+    c = np.concatenate([np.ones(shape = n), np.ones(shape = n), np.zeros(shape = k)])
+    A_eq = np.block([np.eye(n), -np.eye(n), X])
+    b_eq = y
+    bounds = [(0, None)]*n + [(0, None)]*n + [(None, None)]*k ########## NEEDS ATTENTION  -np.max(np.max(X, axis = 1), axis = 0)*bound_multiplier
+    result = linprog(c, A_eq = A_eq, b_eq = b_eq, bounds = bounds)
     if result.status != 0:
-        print(result.status, result.message)
+        # print(result.status, result.message)
         return None
     else:
         return result.x[-k:]
-
 
 
 def AltConvPro_LP(M, rank, iterations: int = 30, tol: float = 1e-5):
@@ -221,7 +246,7 @@ def AltConvPro_LP(M, rank, iterations: int = 30, tol: float = 1e-5):
         V = V @ np.linalg.inv(Nv)
         U = U @ np.linalg.inv(Nu)
         S = Nu @ S @ Nv
-        losses.append(np.linalg.norm(M.reshape(-1, 1) - (U @ S @ V.T).reshape(-1, 1), ord = 2)/np.linalg.norm(M.reshape(-1, 1), ord = 1))
+        losses.append(np.linalg.norm(M.reshape(-1, 1) - (U @ S @ V.T).reshape(-1, 1), ord = 1)/np.linalg.norm(M.reshape(-1, 1), ord = 1))
         if iter == 0:
             consecutive_loss = losses[-1]
         else:
@@ -231,7 +256,6 @@ def AltConvPro_LP(M, rank, iterations: int = 30, tol: float = 1e-5):
                 break
             consecutive_loss = abs(losses[-1] - losses[-2])
     return U @ S**(0.5), V @ S**(0.5), losses
-
 
 # # Example
 # # np.random.seed(0)
@@ -489,21 +513,22 @@ def P(a: np.array, b: np.array):
 
 
 def Q(X, y, updating: str):
-    I = np.nonzero(y)
+    I = np.nonzero(y)[0]
     if updating == 'v':
         z = np.zeros(X.shape[1])
         for j in range(X.shape[1]):
-            z[j] = P(np.multiply(np.sign(y[I]), X[:, j]), np.abs(y[I]))
+            z[j] = P(np.multiply(np.sign(y[I]), X[I, j]), np.abs(y[I]))
     else:
         z = np.zeros(X.shape[0])
         for i in range(X.shape[0]):
-            z[i] = P(np.multiply(np.sign(y[I]), X[i, :]), np.abs(y[I]))
+            z[i] = P(np.multiply(np.sign(y[I]), X[i, I]), np.abs(y[I]))
     return z
 
 def DivNConq(X, rank:int, iterations:int = 30, tol:float = 1e-5):
     d, n = X.shape
-    U = np.random.rand(d, rank)
-    V = np.random.rand(n, rank)
+    U, V, losses = AltConvPro_LP(X, rank = rank, iterations = 1)
+    # U = np.ones((d, rank))
+    # V = np.ones((n, rank))
     losses = []
     for iter in tqdm(range(iterations)):
         # print(iter)
@@ -524,16 +549,16 @@ def DivNConq(X, rank:int, iterations:int = 30, tol:float = 1e-5):
 
 # # Example
 # # np.random.seed(0)
-# M = np.random.laplace(loc = 10, scale = 300, size = (20, 30))
-# rank = 15
+# M = np.random.laplace(loc = 10, scale = 3, size = (100, 30))
+# rank = 5
 # print("DivNConq")
 # U, V, losses1 = DivNConq(M, rank = rank, iterations = 30)
 # print("ALTConvPro_LP")
 # A, B, losses2 = AltConvPro_LP(M, rank = rank, iterations = 30)
-# print(f"U : {U}")
-# print(f"A : {A}")
-# print(f"V : {V}")
-# print(f"B : {B}")
+# # print(f"U : {U}")
+# # print(f"A : {A}")
+# # print(f"V : {V}")
+# # print(f"B : {B}")
 # print("U: (max, min)" + f"{np.max(U.ravel())}, {np.min(U.ravel())})")
 # print("A: (max, min)" + f"{np.max(A.ravel())}, {np.min(A.ravel())})")
 # print("V: (max, min)" + f"{np.max(V.ravel())}, {np.min(V.ravel())})")
@@ -543,12 +568,164 @@ def DivNConq(X, rank:int, iterations:int = 30, tol:float = 1e-5):
 # plt.plot(losses2, label = "AltConvPro_LP")
 # plt.legend()
 # plt.show()
-# print(U)
-# print(V)
-# print()
-# print(M)
-# print()
-# print(U @ V.T)
-# print(M.shape[0]*M.shape[1], (M.shape[0] + M.shape[1])*rank)
+# # print(U)
+# # print(V)
+# # print()
+# # print(M)
+# # print()
+# # print(U @ V.T)
+# # print(M.shape[0]*M.shape[1], (M.shape[0] + M.shape[1])*rank)
+# # plt.plot(losses)
+# # plt.show()
+
+# def sgn(X, gamma: float = 0.01):
+#     return np.where(np.abs(X) < gamma, 0, np.sign(X))
+
+# def weighted_median(Y, W):
+#     if len(Y) == 1:
+#         return Y[0]/W[0]
+#     elif len(Y) == 2:
+#         if W[0] >= W[1]:
+#             return Y[0]/W[0]
+#         else:
+#             return Y[1]/W[1]
+#     else:
+#         ind = len(Y)//2
+#         W_low = np.sum(W[:ind])
+#         W_high = np.sum(W[ind+1:])
+#         if W_low < np.sum(W)/2 and W_high < np.sum(W)/2:
+#             return  Y[ind]/W[ind]
+#         elif W_low >= np.sum(W)/2:
+#             W[ind] = W[ind] + W_high
+#             return weighted_median(Y[:ind+1], W[:ind+1])
+#         else:
+#             W[ind] = W[ind] + W_low
+#             return weighted_median(Y[ind:], W[ind:])
+
+# def new_Q(x, y):
+#     I = np.nonzero(y)[0]
+#     return P(np.multiply(np.sign(y[I]), x[I]), np.abs(y[I]))
+
+# # # def AltProGrad(Y, rank, iterations: int = 30, tol: float = 10.0):
+# # #     """
+# # #     Alternating Projected Gradient for matrix decomposition such that M = UV' under L1 Norm.
+# # #     ## Inputs
+# # #     Y: numpy.array
+# # #         Input matrix
+# # #     rank: int
+# # #         Rank of the decomposition
+# # #     ---
+# # #     ## Outputs
+# # #     (P, X): (numpy.array, numpy.array)
+# # #         Decomposed matrices
+# # #     """
+
+# # #     # Initialization
+# # #     P = np.random.rand(Y.shape[0], rank)
+# # #     X = np.random.rand(Y.shape[1], rank)
+# # #     orig = deepcopy(Y)
+# # #     residuals = []
+# # #     losses = []
+# # #     for iter in tqdm(range(iterations)):
+# # #         # Update P
+# # #         X_dash, R_dash = np.linalg.qr(X, mode = 'reduced')
+# # #         P_dash = P @ R_dash.T
+# # #         del_P_dash = sgn(Y - P_dash @ X_dash.T) @ X_dash
+# # #         a = (Y - P_dash @ X_dash.T).flatten()
+# # #         b = (del_P_dash @ X_dash.T).flatten()
+# # #         alpha = new_Q(a/b, b)
+# # #         # print(f"1 {alpha}")
+# # #         P_dash = P_dash + alpha * del_P_dash
+# # #         Y_dash = (Y - P_dash @ X_dash.T) - alpha * del_P_dash @ X_dash.T
+
+# # #         # Update X
+# # #         P, R_ddash = np.linalg.qr(P_dash, mode = 'reduced')
+# # #         X_ddash = X_dash @ R_ddash.T
+# # #         del_X_ddash = (sgn(Y_dash - P @ X_ddash.T)).T @ P
+# # #         a  = (Y_dash - P @ X_ddash.T).flatten()
+# # #         b = (P @ del_X_ddash.T).flatten()
+# # #         alpha = new_Q(a/b, b)
+# # #         # print(f"2 {alpha}")
+# # #         X = X_ddash + alpha * del_X_ddash
+# # #         Y_new = (Y_dash - P @ X_ddash.T) - alpha * P @ del_X_ddash.T
+
+# # #         losses.append(np.linalg.norm((orig - P @ X.T).reshape(-1, 1), ord = 2))
+# # #         residuals.append(np.linalg.norm((Y_new - Y).reshape(-1, 1), ord = 2))
+# # #         if residuals[-1] < tol:
+# # #             break
+# # #         Y = Y_new
+# # #     return P, X, residuals, losses
+
+
+# def AltProGrad(Y, rank, iterations: int = 30, tol: float = 1.0):
+#     """
+#     Alternating Projected Gradient for matrix decomposition such that M = UV' under L1 Norm.
+#     ## Inputs
+#     Y: numpy.array
+#         Input matrix
+#     rank: int
+#         Rank of the decomposition
+#     ---
+#     ## Outputs
+#     (P, X): (numpy.array, numpy.array)
+#         Decomposed matrices
+#     """
+
+#     # Initialization
+#     P = np.random.rand(Y.shape[0], rank)
+#     X = np.random.rand(Y.shape[1], rank)
+#     orig = deepcopy(Y)
+#     residuals = []
+#     losses = []
+#     for iter in tqdm(range(iterations)):
+#         # Update P
+#         X_dash, R_dash = np.linalg.qr(X, mode = 'reduced')
+#         P_dash = P @ R_dash.T
+#         del_P_dash = sgn(Y - P_dash @ X_dash.T) @ X_dash
+#         a = (Y - P_dash @ X_dash.T).flatten()
+#         b = (del_P_dash @ X_dash.T).flatten()
+#         alpha = new_Q(a, b)
+#         # print(f"1 {alpha}")
+#         Y_dash = (Y - P_dash @ X_dash.T) - alpha * del_P_dash @ X_dash.T
+#         P_dash = P_dash + alpha * del_P_dash
+#         P, R_ddash = np.linalg.qr(P_dash, mode = 'reduced')
+
+#         # Update X
+#         X_ddash = X @ R_ddash.T
+#         del_X_ddash = (sgn(Y - P @ X_ddash.T)).T @ P
+#         a  = (Y - P @ X_ddash.T).flatten()
+#         b = (P @ del_X_ddash.T).flatten()
+#         alpha = new_Q(a, b)
+#         # # print(f"2 {alpha}")
+#         Y_new = (Y - P @ X_ddash.T) - alpha * P @ del_X_ddash.T
+#         X_ddash = X_ddash + alpha * del_X_ddash
+#         X, R_dash = np.linalg.qr(X_ddash, mode = 'reduced')
+
+#         losses.append(np.linalg.norm((orig - P @ X.T).reshape(-1, 1), ord = 2))
+#         residuals.append(np.linalg.norm((Y_new - Y).reshape(-1, 1), ord = 2))
+#         if residuals[-1] < tol:
+#             break
+#     return P, X, residuals, losses
+
+
+# # np.random.seed(0)
+# Y = np.random.randint(0, 20, (10, 5))
+# rank = 3
+# A, B, losses = AltConvPro_LP(Y, rank = rank, iterations = 30)
+# print(np.linalg.norm((Y - A @ B.T).reshape(-1, 1), ord = 2))
+# A, B, residuals, losses = AltProGrad(Y, rank, iterations=50)
+# print(f"L1 Norm(Y): {np.linalg.norm((Y).reshape(-1, 1), ord = 1)}")
+# print("Reconstruction Error: " + str((np.linalg.norm((Y - A @ B.T).reshape(-1, 1), ord = 1))))
+# print(A, B)
 # plt.plot(losses)
 # plt.show()
+
+# # check weighted_median()
+# # Y = np.random.randint(0, 20, (10))
+# # W = np.random.randint(1, 10, (10))
+# # print(Y)
+# # print(W)
+# # a = weighted_median(Y, W)
+# # print(np.linalg.norm(Y - a*W, ord = 1))
+# # b = new_Q(Y, W)
+# # print(np.linalg.norm(Y - b*W, ord = 1))

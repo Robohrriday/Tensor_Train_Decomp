@@ -104,7 +104,7 @@ def L1_TTD_ALSConvPro(X:np.array, ranks: list = [None], max_iter:int=100, tol:fl
                 # bounds = [(0, None)]*(np.prod(n)//n[i]) + [(-1e+1, 1e+1)]*(r[i]*r[i+1])
                 # result = linprog(c, A_ub = A_ub, b_ub = b_ub, bounds = bounds)
                 # G_i_new[:, j] = result.x[-r[i]*r[i+1]:]
-                G_i_new[:, j] = utils.LP_solve(A, utils.mode_n_unfolding(X, i)[j, :], bound_multiplier = 5)
+                G_i_new[:, j] = utils.LP_solve(A, utils.mode_n_unfolding(X, i)[j, :])
             G_list[i] = utils.mode_n_folding(G_i_new.T, 1, (r[i], n[i], r[i+1]))
 
 

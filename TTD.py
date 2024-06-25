@@ -3,8 +3,19 @@
 import numpy as np
 import scipy.linalg as la
 import utils
+from time import time
 
-def TTD(X:np.array, eps:float = 10e-3):
+def timeit(method):
+    def timed(*args, **kw):
+        ts = time()
+        G, r = method(*args, **kw)
+        te = time()
+        return G, r, te-ts
+    return timed
+
+
+@timeit
+def TTD(X:np.array, eps:float = 10e-3, ranks:list = [None]):
     """
     ## Inputs
     X: np.array
@@ -24,19 +35,24 @@ def TTD(X:np.array, eps:float = 10e-3):
     n = X.shape
     assert d >= 2, "Input tensor must be atleast 2-way tensor"
     G_list = []
+    
+    if ranks[0] != None:
+        r = ranks
+    else:
+        r = [1] + [0]*(d-1) + [1] 
     delta = eps/np.sqrt(d-1)
-    r = [1] + [0]*(d-1) + [1] 
     for i in range(d-1):
         X = utils.MATLAB_reshape(X, (r[i]*n[i], -1))
         U, S, V = la.svd(X, full_matrices=False)
 
-        norm = np.linalg.norm(S)
-        if norm == 0:
-            r[i+1] = 1
-        elif delta <= 0:
-            r[i+1] = len(S)
-        else:
-            r[i+1] = len(S[np.cumsum(S**2)[::-1] > delta**2])
+        if ranks[0] == None:
+            norm = np.linalg.norm(S)
+            if norm == 0:
+                r[i+1] = 1
+            elif delta <= 0:
+                r[i+1] = len(S)
+            else:
+                r[i+1] = len(S[np.cumsum(S**2)[::-1] > delta**2])
         U = U[:, :r[i+1]]
         S = S[:r[i+1]]
         V = V[:r[i+1], :]
