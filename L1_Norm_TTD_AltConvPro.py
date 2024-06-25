@@ -61,7 +61,7 @@ def L1_TTD_AltConvPro(X:np.array, ranks: list = [None]):
     # print(r)
     for i in range(d-1):
         X = utils.MATLAB_reshape(X, (r[i]*n[i], -1))
-        U, V, loss = utils.AltConvPro_LP(X, r[i+1], tol = 1e-6)
+        U, V, loss = utils.AltConvPro_LP(X, r[i+1], tol = 1e-8)
         G_list.append(utils.MATLAB_reshape(U, (r[i], n[i], r[i+1])))
         X = V.T
         losses.append(loss[-1])
