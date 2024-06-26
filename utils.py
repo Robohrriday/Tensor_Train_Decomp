@@ -333,26 +333,21 @@ def AltConvPro_LP(M, rank, iterations: int = 30, tol: float = 1e-5):
 #         X1 = U @ V.T
 #         l1_err_w.append(np.linalg.norm(M_hat - X1))
 #         l1_err_wo.append(np.linalg.norm(M - X1))
-#         # print(f"L1 With outlier: {np.linalg.norm(M_hat - U @ V.T)}")
-#         # print(f"L1 Without outlier: {np.linalg.norm(M - U @ V.T)}")
 
 #         # TTD
-#         A, S, B = np.linalg.svd(M_hat, full_matrices = False)
-#         X2 = A @ np.diag(S) @ B.T
+#         X, Y, Z = np.linalg.svd(M_hat, full_matrices = False)
+#         X = X[:, :rank]
+#         Z = Z[:rank, :]
+#         X2 = X @ np.diag(Y[:rank]) @ Z
 #         l2_err_w.append(np.linalg.norm(M_hat - X2))
 #         l2_err_wo.append(np.linalg.norm(M - X2))
-#         # print(f"L2 With outlier: {np.linalg.norm(M_hat - X2)}")
-#         # print(f"L2 Without outlier: {np.linalg.norm(M - X2)}")
-
-#         # # Difference
-#         # print(f"Difference: {np.linalg.norm(U @ V.T - X2)}")
 
 #     plt.figure()
 #     plt.title("Compression Ratio (fixed): " + str(r) + " Rank (fixed): " + str(rank))
 #     plt.xlabel("Number of Outliers")
 #     plt.ylabel("Squared Error")
-#     plt.plot(num_out, l1_err_w, label = "L1 With Outliers", marker = 'o', linestyle = '-')
-#     plt.plot(num_out, l2_err_w, label = "L2 With Outliers", marker = 'x', linestyle = '-')
+#     plt.plot(num_out, l1_err_w, label = "L1 wrt Corrupted", marker = 'o', linestyle = '-')
+#     plt.plot(num_out, l2_err_w, label = "L2 wrt Corrupted", marker = 'x', linestyle = '-')
 #     plt.plot(num_out, [np.linalg.norm(M_hat)]*len(num_out), label = "L2 Norm of M_hat", linestyle = '--')
 #     plt.plot(num_out, [np.linalg.norm(M)]*len(num_out), label = "L2 Norm of M", linestyle = '--')
 #     plt.grid(alpha = 0.5)
@@ -363,8 +358,8 @@ def AltConvPro_LP(M, rank, iterations: int = 30, tol: float = 1e-5):
 #     plt.title("Compression Ratio (fixed): " + str(r) + " Rank (fixed): " + str(rank))
 #     plt.xlabel("Number of Outliers")
 #     plt.ylabel("Squared Error")
-#     plt.plot(num_out, l1_err_wo, label = "L1 Without Outliers", marker = 'o', linestyle = '-')
-#     plt.plot(num_out, l2_err_wo, label = "L2 Without Outliers", marker = 'x', linestyle = '-')
+#     plt.plot(num_out, l1_err_wo, label = "L1 wrt Uncorrupted", marker = 'o', linestyle = '-')
+#     plt.plot(num_out, l2_err_wo, label = "L2 wrt Uncorrupted", marker = 'x', linestyle = '-')
 #     plt.plot(num_out, [np.linalg.norm(M_hat)]*len(num_out), label = "L2 Norm of M_hat", linestyle = '--')
 #     plt.plot(num_out, [np.linalg.norm(M)]*len(num_out), label = "L2 Norm of M", linestyle = '--')
 #     plt.grid(alpha = 0.5)
@@ -381,8 +376,8 @@ def AltConvPro_LP(M, rank, iterations: int = 30, tol: float = 1e-5):
 #     plt.title("Num_out(fixed)_" + str(num))
 #     plt.xlabel("Compression Ratio")
 #     plt.ylabel("Squared Error")
-#     plt.plot(comp_rat, [list_l1_err_w[j][idx] for j in range(len(list_l1_err_w))], label = "L1 With Outliers", marker = 'o', linestyle = '-')
-#     plt.plot(comp_rat,  [list_l2_err_w[j][idx] for j in range(len(list_l2_err_w))], label = "L2 With Outliers", marker = 'x', linestyle = '-')
+#     plt.plot(comp_rat, [list_l1_err_w[j][idx] for j in range(len(list_l1_err_w))], label = "L1 wrt Corrupted", marker = 'o', linestyle = '-')
+#     plt.plot(comp_rat,  [list_l2_err_w[j][idx] for j in range(len(list_l2_err_w))], label = "L2 wrt Corrupted", marker = 'x', linestyle = '-')
 #     plt.plot(comp_rat, [np.linalg.norm(M_hat)]*len(comp_rat), label = "L2 Norm of M_hat", linestyle = '--')
 #     plt.plot(comp_rat, [np.linalg.norm(M)]*len(comp_rat), label = "L2 Norm of M", linestyle = '--')
 #     plt.grid(alpha = 0.5)
@@ -393,8 +388,8 @@ def AltConvPro_LP(M, rank, iterations: int = 30, tol: float = 1e-5):
 #     plt.title("Num_out(fixed)_" + str(num))
 #     plt.xlabel("Compression Ratio")
 #     plt.ylabel("Squared Error")
-#     plt.plot(comp_rat,  [list_l1_err_wo[j][idx] for j in range(len(list_l1_err_wo))], label = "L1 Without Outliers", marker = 'o', linestyle = '-')
-#     plt.plot(comp_rat,  [list_l2_err_wo[j][idx] for j in range(len(list_l2_err_wo))], label = "L2 Without Outliers", marker = 'x', linestyle = '-')
+#     plt.plot(comp_rat,  [list_l1_err_wo[j][idx] for j in range(len(list_l1_err_wo))], label = "L1 wrt Uncorrupted", marker = 'o', linestyle = '-')
+#     plt.plot(comp_rat,  [list_l2_err_wo[j][idx] for j in range(len(list_l2_err_wo))], label = "L2 wrt Uncorrupted", marker = 'x', linestyle = '-')
 #     plt.plot(comp_rat, [np.linalg.norm(M_hat)]*len(comp_rat), label = "L2 Norm of M_hat", linestyle = '--')
 #     plt.plot(comp_rat, [np.linalg.norm(M)]*len(comp_rat), label = "L2 Norm of M", linestyle = '--')
 #     plt.grid(alpha = 0.5)
