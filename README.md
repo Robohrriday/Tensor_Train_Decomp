@@ -1,5 +1,5 @@
 # Tensor_Train_Decomp
-Exploring Tensor-Train Decomposition | Summer 2024 Research @ IITGN | Prof. Anirban Dasgupta<br>
+Exploring Tensor-Train Decomposition | 2024 Research @ IITGN | Prof. Anirban Dasgupta<br>
 
 ### Methods Explored:
 1) ALS based approach inspired from paper "LOW-RANK TENSOR TRAIN DECOMPOSITION USING TENSORSKETCH"
