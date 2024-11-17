@@ -1,7 +1,7 @@
-import L1_Norm_TTD_AltConvPro
-import L1_Norm_TTD_DivNConq
+import implementations.L1_Norm_TTD_AltConvPro as L1_Norm_TTD_AltConvPro
+import implementations.L1_Norm_TTD_DivNConq as L1_Norm_TTD_DivNConq
 import TTD
-import utils
+import implementations.utils as utils
 import numpy as np
 from copy import deepcopy
 

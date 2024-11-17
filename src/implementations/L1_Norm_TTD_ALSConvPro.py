@@ -125,14 +125,15 @@ def L1_TTD_ALSConvPro(X:np.array, ranks: list = [None], max_iter:int=100, tol:fl
     return G_list, losses, best_G_list
 
 # Example
-np.random.seed(3)
-X = np.random.randint(0, 10, (2, 3, 4))
-G, losses, best_G = L1_TTD_ALSConvPro(X)
-plt.plot(losses)
-plt.title("Loss vs Iteration\nAvg Loss: {:.4f}".format(np.mean(losses)))
-plt.xlabel("Iteration")
-plt.ylabel("Loss")
-plt.grid(alpha = 0.5)
-plt.show()
-# print(X)
-# print(TTD_reconstruct(best_G))
+if __name__ == "__main__":
+    np.random.seed(3)
+    X = np.random.randint(0, 10, (2, 3, 4))
+    G, losses, best_G = L1_TTD_ALSConvPro(X)
+    plt.plot(losses)
+    plt.title("Loss vs Iteration\nAvg Loss: {:.4f}".format(np.mean(losses)))
+    plt.xlabel("Iteration")
+    plt.ylabel("Loss")
+    plt.grid(alpha = 0.5)
+    plt.show()
+    # print(X)
+    # print(TTD_reconstruct(best_G))

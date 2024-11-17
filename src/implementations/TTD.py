@@ -78,11 +78,12 @@ def TTD_reconstruct(G_list:list):
         X = np.tensordot(X, G_list[i], axes=([-1], [0]))
     return np.reshape(X, n)
 
-# ### Example
-# np.random.seed(0)
-# X = np.random.randn(5, 10, 15, 20)
-# G_list, r = TTD(X)
-# X_reconstructed = TTD_reconstruct(G_list)
-# print(np.linalg.norm(X - X_reconstructed)/np.linalg.norm(X))
-# print(r)
-# print([G.shape for G in G_list])
+### Example
+if __name__ == "__main__":
+    np.random.seed(0)
+    X = np.random.randn(5, 10, 15, 20)
+    G_list, r = TTD(X)
+    X_reconstructed = TTD_reconstruct(G_list)
+    print(np.linalg.norm(X - X_reconstructed)/np.linalg.norm(X))
+    print(r)
+    print([G.shape for G in G_list])
