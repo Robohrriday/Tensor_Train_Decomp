@@ -211,7 +211,32 @@ def AltConvPro_LADRegr(M, rank, iterations: int = 10):
 #         return result.x[-k:]
 
 
-def LP_solve(X, y):
+# def LP_solve(X, y):
+#     """
+#     Solve the L1 norm optimization problem using linear programming
+#     ## Inputs
+#     X: numpy.array
+#         Input matrix
+#     y: numpy.array
+#         Target vector
+#     ---
+#     ## Outputs
+#     result: numpy.array
+#         Solution vector
+#     """
+#     n, k = X.shape
+#     c = np.concatenate([np.ones(shape = n), np.ones(shape = n), np.zeros(shape = k)])
+#     A_eq = np.block([np.eye(n), -np.eye(n), X])
+#     b_eq = y
+#     bounds = [(0, None)]*n + [(0, None)]*n + [(None, None)]*k ########## NEEDS ATTENTION  -np.max(np.max(X, axis = 1), axis = 0)*bound_multiplier
+#     result = linprog(c, A_eq = A_eq, b_eq = b_eq, bounds = bounds)
+#     if result.status != 0:
+#         # print(result.status, result.message)
+#         return None
+#     else:
+#         return result.x[-k:]
+
+def LP_solve(X, y, w):
     """
     Solve the L1 norm optimization problem using linear programming
     ## Inputs
@@ -219,13 +244,15 @@ def LP_solve(X, y):
         Input matrix
     y: numpy.array
         Target vector
+    w: numpy.array
+        Weight vector
     ---
     ## Outputs
     result: numpy.array
         Solution vector
     """
     n, k = X.shape
-    c = np.concatenate([np.ones(shape = n), np.ones(shape = n), np.zeros(shape = k)])
+    c = np.concatenate([w, w, np.zeros(shape = k)])
     A_eq = np.block([np.eye(n), -np.eye(n), X])
     b_eq = y
     bounds = [(0, None)]*n + [(0, None)]*n + [(None, None)]*k ########## NEEDS ATTENTION  -np.max(np.max(X, axis = 1), axis = 0)*bound_multiplier
@@ -237,61 +264,7 @@ def LP_solve(X, y):
         return result.x[-k:]
 
 
-# def AltConvPro_LP(M, rank, iterations: int = 30, tol: float = 1e-5, sigma:float = 6):
-#     """
-#     Alternating Convex Programming for matrix decomposition such that M = UV' under L1 Norm.
-#     ## Inputs
-#     M: numpy.array
-#         Input matrix
-#     rank: int
-#         Rank of the decomposition
-#     ---
-#     ## Outputs
-#     (U, V): (numpy.array, numpy.array)
-#         Decomposed matrices
-#     """
-
-#     # Initialization
-#     U = np.eye(M.shape[0], rank)
-#     S = np.eye(rank)
-#     V = np.zeros((M.shape[1], rank))
-#     W = np.ones((M.shape[0], M.shape[1]))
-#     losses = []
-#     for iter in tqdm(range(iterations)):
-#         # print(iter)
-#         # Update V
-#         for j in range(M.shape[1]):
-#             temp = LP_solve(U @ S, M[:, j], W[:, j])
-#             if temp is not None:
-#                 V[j, :] = temp
-#         # Update U
-#         for j in range(M.shape[0]):
-#             temp = LP_solve(V @ S.T, M[j, :], W[j, :])
-#             if temp is not None:
-#                 U[j, :] = temp
-#         # Normalization
-#         Nv = np.diag(V.T @ V)
-#         Nu = np.diag(U.T @ U)
-#         V = V @ np.diag(1/Nv)
-#         U = U @ np.diag(1/Nu)
-#         S = np.diag(Nu) @ S @ np.diag(Nv)
-#         for i in range(M.shape[0]):
-#             for j in range(M.shape[1]):
-#                 W[i, j] = np.e**(-(M[i, j] - U[i, :].T @ V[j, :])**2/(2*sigma**2))
-#         W = W/np.sum(np.sum(W, axis = 1), axis = 0)
-#         losses.append(np.linalg.norm(M.reshape(-1, 1) - (U @ S @ V.T).reshape(-1, 1), ord = 1)/np.linalg.norm(M.reshape(-1, 1), ord = 1))
-#         if iter == 0:
-#             U_old = U
-#             V_old = V
-#         else:
-#             if iter == 1:
-#                 simU = np.diag(U.T @ U_old)/(np.linalg.norm(U, axis = 0)*np.linalg.norm(U_old, axis = 0))
-#                 simV = np.diag(V.T @ V_old)/(np.linalg.norm(V, axis = 0)*np.linalg.norm(V_old, axis = 0))
-#             if all(simU > np.ones(len(simU)) - tol) and all(simV > np.ones(len(simV)) - tol):
-#                 break
-#     return U @ S**(0.5), V @ S**(0.5), losses
-
-def AltConvPro_LP(M, rank, iterations: int = 30, tol: float = 1e-5):
+def AltConvPro_LP(M, rank, iterations: int = 30, tol: float = 1e-5, sigma:float = 6):
     """
     Alternating Convex Programming for matrix decomposition such that M = UV' under L1 Norm.
     ## Inputs
@@ -309,17 +282,18 @@ def AltConvPro_LP(M, rank, iterations: int = 30, tol: float = 1e-5):
     U = np.eye(M.shape[0], rank)
     S = np.eye(rank)
     V = np.zeros((M.shape[1], rank))
+    W = np.ones((M.shape[0], M.shape[1]))
     losses = []
     for iter in tqdm(range(iterations)):
         # print(iter)
         # Update V
         for j in range(M.shape[1]):
-            temp = LP_solve(U @ S, M[:, j])
+            temp = LP_solve(U @ S, M[:, j], W[:, j])
             if temp is not None:
                 V[j, :] = temp
         # Update U
         for j in range(M.shape[0]):
-            temp = LP_solve(V @ S.T, M[j, :])
+            temp = LP_solve(V @ S.T, M[j, :], W[j, :])
             if temp is not None:
                 U[j, :] = temp
         # Normalization
@@ -328,16 +302,73 @@ def AltConvPro_LP(M, rank, iterations: int = 30, tol: float = 1e-5):
         V = V @ np.diag(1/Nv)
         U = U @ np.diag(1/Nu)
         S = np.diag(Nu) @ S @ np.diag(Nv)
-        losses.append(np.linalg.norm(M.reshape(-1, 1) - (U @ S @ V.T).reshape(-1, 1), ord = 1)/np.linalg.norm(M.reshape(-1, 1), ord = 1))
+        W = np.exp(-(M - U @ S @ V.T)**2/(2*sigma**2))
+        W = W/np.sum(np.sum(W, axis = 1), axis = 0)
+        losses.append(np.linalg.norm((M - (U @ S @ V.T)).reshape(-1, 1), ord = 1)/np.linalg.norm(M.reshape(-1, 1), ord = 1))
         if iter == 0:
             consecutive_loss = losses[-1]
         else:
-            if iter == 1:
-                consecutive_loss = abs(losses[-1] - losses[-2])
+            consecutive_loss = abs(losses[-1] - losses[-2])
             if consecutive_loss < tol:
                 break
-            consecutive_loss = abs(losses[-1] - losses[-2])
-    return U @ S**(0.5), V @ S**(0.5), losses
+        # if iter == 0:
+        #     U_old = U
+        #     V_old = V
+        # else:
+        #     if iter == 1:
+        #         simU = np.diag(U.T @ U_old)/(np.linalg.norm(U, axis = 0)*np.linalg.norm(U_old, axis = 0))
+        #         simV = np.diag(V.T @ V_old)/(np.linalg.norm(V, axis = 0)*np.linalg.norm(V_old, axis = 0))
+        #     if all(simU > np.ones(len(simU)) - tol) and all(simV > np.ones(len(simV)) - tol):
+        #         break
+    return U @ S**(0.5), V @ S**(0.5), losses, W
+
+# def AltConvPro_LP(M, rank, iterations: int = 30, tol: float = 1e-5):
+#     """
+#     Alternating Convex Programming for matrix decomposition such that M = UV' under L1 Norm.
+#     ## Inputs
+#     M: numpy.array
+#         Input matrix
+#     rank: int
+#         Rank of the decomposition
+#     ---
+#     ## Outputs
+#     (U, V): (numpy.array, numpy.array)
+#         Decomposed matrices
+#     """
+
+#     # Initialization
+#     U = np.eye(M.shape[0], rank)
+#     S = np.eye(rank)
+#     V = np.zeros((M.shape[1], rank))
+#     losses = []
+#     for iter in tqdm(range(iterations)):
+#         # print(iter)
+#         # Update V
+#         for j in range(M.shape[1]):
+#             temp = LP_solve(U @ S, M[:, j])
+#             if temp is not None:
+#                 V[j, :] = temp
+#         # Update U
+#         for j in range(M.shape[0]):
+#             temp = LP_solve(V @ S.T, M[j, :])
+#             if temp is not None:
+#                 U[j, :] = temp
+#         # Normalization
+#         Nv = np.diag(V.T @ V)
+#         Nu = np.diag(U.T @ U)
+#         V = V @ np.diag(1/Nv)
+#         U = U @ np.diag(1/Nu)
+#         S = np.diag(Nu) @ S @ np.diag(Nv)
+#         losses.append(np.linalg.norm(M.reshape(-1, 1) - (U @ S @ V.T).reshape(-1, 1), ord = 1)/np.linalg.norm(M.reshape(-1, 1), ord = 1))
+#         if iter == 0:
+#             consecutive_loss = losses[-1]
+#         else:
+#             if iter == 1:
+#                 consecutive_loss = abs(losses[-1] - losses[-2])
+#             if consecutive_loss < tol:
+#                 break
+#             consecutive_loss = abs(losses[-1] - losses[-2])
+#     return U @ S**(0.5), V @ S**(0.5), losses
 
 # # Example
 # # np.random.seed(0)
