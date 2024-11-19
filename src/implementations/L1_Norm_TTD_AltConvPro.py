@@ -44,7 +44,7 @@ def L1_TTD_AltConvPro(X:np.array, ranks: list = [None]):
     G: list of numpy.array
         Core tensors
     """
-
+    
     d = len(X.shape)
     n = X.shape
     assert d >= 2, "Input tensor must be atleast 2-way tensor"

@@ -140,7 +140,7 @@ def AltConvPro_LP(M, rank, iterations: int = 30, tol: float = 1e-5, sigma:float 
     (U, V): (numpy.array, numpy.array)
         Decomposed matrices
     """
-
+    print("\n\n")
     # Initialization
     U = np.eye(M.shape[0], rank)
     S = np.eye(rank)
